@@ -33,6 +33,7 @@
 #include <mach/msm_hsusb.h>
 #include <asm/gpio.h>
 #include <linux/input/mt.h>
+#include <linux/pl_sensor.h>
 #include <linux/async.h>
 #include <linux/firmware.h>
 #include <linux/kthread.h>
@@ -2091,6 +2092,12 @@ static ssize_t keypad_enable_store(struct device *dev,
 		clear_bit(KEY_HOME, ts->input_dev->keybit);
 	}
 	input_sync(ts->input_dev);
+	
+	
+	return count;
+}
+
+static DEVICE_ATTR(keypad_enable, S_IRUGO|S_IWUSR, keypad_enable_show, keypad_enable_store);
 
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_SWEEP2WAKE
 
@@ -2368,8 +2375,6 @@ static DEVICE_ATTR(sleep_wake_vibration_time, (S_IWUSR|S_IRUGO),
 	synaptics_sleep_wake_vibration_time_show, synaptics_sleep_wake_vibration_time_dump);
 
 #endif
-
-static DEVICE_ATTR(keypad_enable, S_IRUGO|S_IWUSR, keypad_enable_show, keypad_enable_store);
 
 static struct kobject *android_touch_kobj;
 
@@ -4697,6 +4702,10 @@ static int synaptics_ts_suspend(struct i2c_client *client, pm_message_t mesg)
 			}
 		}
 
+#ifdef CONFIG_PWRKEY_STATUS_API
+	if (ts->packrat_number < SYNAPTICS_FW_NOCAL_PACKRAT)
+		printk(KERN_INFO "[TP][PWR][STATE] get power key state = %d\n", getPowerKeyState());
+#endif
 	if (ts->disable_CBC) {
 		if (ts->package_id < 3400) {
 			ret = i2c_syn_read(ts->client,
