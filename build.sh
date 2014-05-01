@@ -4,7 +4,7 @@
 
 # Kernel Version
 BASE_VER=".JOEY.CM"
-VER=".M7.001"
+VER=".M7"
 VER=$BASE_VER$VER
 
 # AK Variables
