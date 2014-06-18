@@ -199,6 +199,9 @@ extern int __cpufreq_driver_target(struct cpufreq_policy *policy,
 				   unsigned int relation);
 
 
+extern int __cpufreq_driver_getavg(struct cpufreq_policy *policy,
+				   unsigned int cpu);
+
 int cpufreq_register_governor(struct cpufreq_governor *governor);
 void cpufreq_unregister_governor(struct cpufreq_governor *governor);
 
@@ -231,6 +234,9 @@ struct cpufreq_driver {
 
 	/* should be defined, if possible */
 	unsigned int	(*get)	(unsigned int cpu);
+
+	unsigned int (*getavg)	(struct cpufreq_policy *policy,
+				 unsigned int cpu);
 
 	/* optional */
 	int	(*bios_limit)	(int cpu, unsigned int *limit);
