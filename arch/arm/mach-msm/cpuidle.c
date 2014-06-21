@@ -67,12 +67,42 @@ static struct msm_cpuidle_state msm_cstates[] = {
 		MSM_PM_SLEEP_MODE_POWER_COLLAPSE_STANDALONE},
 };
 
+#ifdef CONFIG_MSM_SLEEP_STATS
+static DEFINE_PER_CPU(struct atomic_notifier_head, msm_cpuidle_notifiers);
+
+int msm_cpuidle_register_notifier(unsigned int cpu, struct notifier_block *nb)
+{
+	struct atomic_notifier_head *head =
+		&per_cpu(msm_cpuidle_notifiers, cpu);
+
+	return atomic_notifier_chain_register(head, nb);
+}
+EXPORT_SYMBOL(msm_cpuidle_register_notifier);
+
+int msm_cpuidle_unregister_notifier(unsigned int cpu, struct notifier_block *nb)
+{
+	struct atomic_notifier_head *head =
+		&per_cpu(msm_cpuidle_notifiers, cpu);
+
+	return atomic_notifier_chain_unregister(head, nb);
+}
+EXPORT_SYMBOL(msm_cpuidle_unregister_notifier);
+#endif
+
 static int msm_cpuidle_enter(
 	struct cpuidle_device *dev, struct cpuidle_driver *drv, int index)
 {
 	int ret = 0;
 	int i;
 	enum msm_pm_sleep_mode pm_mode;
+#ifdef CONFIG_MSM_SLEEP_STATS
+	struct atomic_notifier_head *head =
+			&__get_cpu_var(msm_cpuidle_notifiers);
+#endif
+
+#ifdef CONFIG_MSM_SLEEP_STATS
+	atomic_notifier_call_chain(head, MSM_CPUIDLE_STATE_ENTER, NULL);
+#endif
 
 	pm_mode = msm_pm_idle_enter(dev, drv, index);
 
@@ -87,6 +117,9 @@ static int msm_cpuidle_enter(
 		}
 	}
 
+#ifdef CONFIG_MSM_SLEEP_STATS
+	atomic_notifier_call_chain(head, MSM_CPUIDLE_STATE_EXIT, NULL);
+#endif
 
 	local_irq_enable();
 
